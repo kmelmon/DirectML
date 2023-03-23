@@ -7,6 +7,7 @@
 #include "FindMedia.h"
 #include "ReadData.h"
 #include "Float16Compressor.h"
+#include "LumingNetwork.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -230,6 +231,7 @@ void Sample::CreateDirectMLResources()
 
         weightUploadBatch.End(m_deviceResources->GetCommandQueue());
 
+        DmlLumingNetwork test(m_dmlDevice.Get());
 
         // Construct a DML graph of operators
 

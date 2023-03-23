@@ -39,6 +39,12 @@
     <ClCompile Include="MediaEnginePlayer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DmlNetworkBuilder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DmlNetwork.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Kits\ATGTK\ATGColors.h">
@@ -75,6 +81,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DirectMLSuperResolution.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DmlNetworkBuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LumingNetwork.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DmlNetwork.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
