@@ -199,6 +199,7 @@ void Sample::CreateDirectMLResources()
     uint64_t modelInputBufferSize = 0;
     uint64_t modelOutputBufferSize = 0;
 
+#if 0
     {
         using Dimensions = dml::TensorDesc::Dimensions;
 
@@ -230,8 +231,6 @@ void Sample::CreateDirectMLResources()
             std::array<uint32_t, 4>{ 3, 32, 3, 3 }, weightUploadBatch, &m_modelConvFilterWeights[6], nullptr);
 
         weightUploadBatch.End(m_deviceResources->GetCommandQueue());
-
-        DmlLumingNetwork test(m_dmlDevice.Get());
 
         // Construct a DML graph of operators
 
@@ -328,6 +327,39 @@ void Sample::CreateDirectMLResources()
         DML_EXECUTION_FLAGS executionFlags = DML_EXECUTION_FLAG_ALLOW_HALF_PRECISION_COMPUTATION;
         m_dmlGraph = graph.Compile(executionFlags, std::array<dml::Expression, 1>{ output });
     }
+#else
+    {
+    DmlLumingNetwork lumingNetwork(m_dmlDevice.Get());
+
+    WeightMapType weights;
+    lumingNetwork.PopulateWeightMap(weights);
+
+        // Upload weights to the GPU
+        DirectX::ResourceUploadBatch weightUploadBatch(device);
+        weightUploadBatch.Begin();
+
+        CreateWeightTensors(weights, "conv1/weights", "conv1/BatchNorm/scale", "conv1/BatchNorm/shift",
+            std::array<uint32_t, 4>{ 32, 3, 5, 5 }, weightUploadBatch, & m_modelConvFilterWeights[0], & m_modelConvBiasWeights[0]);
+        CreateWeightTensors(weights, "conv2/weights", "conv2/BatchNorm/scale", "conv2/BatchNorm/shift",
+            std::array<uint32_t, 4>{ 64, 32, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[1], & m_modelConvBiasWeights[1]);
+        CreateWeightTensors(weights, "conv3/weights", "conv3/BatchNorm/scale", "conv3/BatchNorm/shift",
+            std::array<uint32_t, 4>{ 64, 64, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[2], & m_modelConvBiasWeights[2]);
+        CreateWeightTensors(weights, "conv_up1/conv/weights", "conv_up1/conv/BatchNorm/scale", "conv_up1/conv/BatchNorm/shift",
+            std::array<uint32_t, 4>{ 32, 64, 5, 5 }, weightUploadBatch, & m_modelConvFilterWeights[3], & m_modelConvBiasWeights[3]);
+        CreateWeightTensors(weights, "conv4/weights", "conv4/BatchNorm/scale", "conv4/BatchNorm/shift",
+            std::array<uint32_t, 4>{ 32, 32, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[4], & m_modelConvBiasWeights[4]);
+        CreateWeightTensors(weights, "conv5/weights", "conv5/BatchNorm/scale", "conv5/BatchNorm/shift",
+            std::array<uint32_t, 4>{ 32, 32, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[5], & m_modelConvBiasWeights[5]);
+        CreateWeightTensors(weights, "conv6/weights", nullptr, nullptr,
+            std::array<uint32_t, 4>{ 3, 32, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[6], nullptr);
+
+        weightUploadBatch.End(m_deviceResources->GetCommandQueue());
+
+        auto network = lumingNetwork.Compile();
+        modelInputBufferSize = lumingNetwork.m_modelInputBufferSize;
+        modelOutputBufferSize = lumingNetwork.m_modelOutputBufferSize;
+    }
+#endif
 
     // Buffers for DML inputs and outputs
     {

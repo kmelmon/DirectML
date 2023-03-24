@@ -357,9 +357,11 @@
     <ClInclude Include="Kits\ATGTK\ReadData.h" />
     <ClInclude Include="LoadWeights.h" />
     <ClInclude Include="LumingNetwork.h" />
+    <ClInclude Include="LumingNetworkWeights.h" />
     <ClInclude Include="MediaEnginePlayer.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="StepTimer.h" />
+    <ClInclude Include="WeightMapType.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp" />
@@ -370,6 +372,7 @@
     <ClCompile Include="DmlNetwork.cpp" />
     <ClCompile Include="DmlNetworkBuilder.cpp" />
     <ClCompile Include="LoadWeights.cpp" />
+    <ClCompile Include="LumingNetwork.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MediaEnginePlayer.cpp" />
     <ClCompile Include="pch.cpp">
