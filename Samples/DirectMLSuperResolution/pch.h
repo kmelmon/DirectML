@@ -14,6 +14,7 @@
 #define _WIN32_WINNT 0x0A00
 #include <SDKDDKVer.h>
 
+//#define LUMING_NETWORK
 #define _CRT_RAND_S
 
 // Use the C++ standard templated min/max

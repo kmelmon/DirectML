@@ -37,6 +37,27 @@ DmlLumingNetwork::DmlLumingNetwork(IDMLDevice* device, DML_TENSOR_DATA_TYPE data
 void DmlLumingNetwork::PopulateWeightMap(WeightMapType& weights)
 {
     ConvertToVectorAndAssign(weights, "conv1_weights", conv1_weights);
+    ConvertToVectorAndAssign(weights, "conv1_biases", conv1_biases);
+    ConvertToVectorAndAssign(weights, "rdb1_conv1_weights", rdb1_conv1_weights);
+    ConvertToVectorAndAssign(weights, "rdb1_conv1_biases", rdb1_conv1_biases);
+    ConvertToVectorAndAssign(weights, "rdb1_conv2_weights", rdb1_conv2_weights);
+    ConvertToVectorAndAssign(weights, "rdb1_conv2_biases", rdb1_conv2_biases);
+    ConvertToVectorAndAssign(weights, "rdb1_conv3_weights", rdb1_conv3_weights);
+    ConvertToVectorAndAssign(weights, "rdb1_conv3_biases", rdb1_conv3_biases);
+    ConvertToVectorAndAssign(weights, "rdb1_conv4_weights", rdb1_conv4_weights);
+    ConvertToVectorAndAssign(weights, "rdb1_conv4_biases", rdb1_conv4_biases);
+    ConvertToVectorAndAssign(weights, "rdb2_conv1_weights", rdb2_conv1_weights);
+    ConvertToVectorAndAssign(weights, "rdb2_conv1_biases", rdb2_conv1_biases);
+    ConvertToVectorAndAssign(weights, "rdb2_conv2_weights", rdb2_conv2_weights);
+    ConvertToVectorAndAssign(weights, "rdb2_conv2_biases", rdb2_conv2_biases);
+    ConvertToVectorAndAssign(weights, "rdb2_conv3_weights", rdb2_conv3_weights);
+    ConvertToVectorAndAssign(weights, "rdb2_conv3_weights", rdb2_conv3_weights);
+    ConvertToVectorAndAssign(weights, "rdb2_conv3_weights", rdb2_conv3_weights);
+    ConvertToVectorAndAssign(weights, "rdb2_conv3_biases", rdb2_conv3_biases);
+    ConvertToVectorAndAssign(weights, "rdb2_conv4_weights", rdb2_conv4_weights);
+    ConvertToVectorAndAssign(weights, "rdb2_conv4_biases", rdb2_conv4_biases);
+    ConvertToVectorAndAssign(weights, "conv_final_weights", conv_final_weights);
+    ConvertToVectorAndAssign(weights, "conv_final_biases", conv_final_biases);
 }
 
 dml::Expression DmlLumingNetwork::Conv2d(

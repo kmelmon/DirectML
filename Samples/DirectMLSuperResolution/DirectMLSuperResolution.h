@@ -140,6 +140,16 @@ private:
         DirectX::ResourceUploadBatch& uploadBatch,
         _Out_writes_(1) ID3D12Resource** filterWeightResourceOut,
         _Out_writes_opt_(1) ID3D12Resource** biasWeightResourceOut);
+
+    void CreateWeightTensorsSimple(
+        WeightMapType& weights,
+        const char* convLayerName,
+        const char* biasName,
+        dml::Span<const uint32_t> filterSizes,
+        DirectX::ResourceUploadBatch& uploadBatch,
+        _Out_writes_(1) ID3D12Resource** filterWeightResourceOut,
+        _Out_writes_(1) ID3D12Resource** biasWeightResourceOut);
+
     void CreateWeightResource(
         _In_reads_(4) const uint32_t* tensorSizes,
         _Out_writes_(1) ID3D12Resource** d3dResourceOut);
@@ -222,7 +232,11 @@ private:
 
     // Model layer sizes and indices
     static const size_t                             c_numUpsampleLayers = 2;
+#ifdef LUMING_NETWORK
+    static const size_t                             c_numConvLayers = 10;
+#else
     static const size_t                             c_numConvLayers = 7;
+#endif
     static const size_t                             c_numIntermediateBuffers = 2;
 
     enum OpTypes : uint32_t

@@ -199,7 +199,47 @@ void Sample::CreateDirectMLResources()
     uint64_t modelInputBufferSize = 0;
     uint64_t modelOutputBufferSize = 0;
 
-#if 0
+#ifdef LUMING_NETWORK
+    {
+        DmlLumingNetwork lumingNetwork(m_dmlDevice.Get());
+
+        WeightMapType weights;
+        lumingNetwork.PopulateWeightMap(weights);
+
+        // Upload weights to the GPU
+        DirectX::ResourceUploadBatch weightUploadBatch(device);
+        weightUploadBatch.Begin();
+
+        int counter1 = 0;
+        int counter2 = 0;
+        CreateWeightTensorsSimple(weights, "conv1_weights", "conv1_biases",
+            std::array<uint32_t, 4>{ 32, 3, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[counter1++], & m_modelConvBiasWeights[counter2++]);
+        CreateWeightTensorsSimple(weights, "rdb1_conv1_weights", "rdb1_conv1_biases",
+            std::array<uint32_t, 4>{ 32, 32, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[counter1++], & m_modelConvBiasWeights[counter2++]);
+        CreateWeightTensorsSimple(weights, "rdb1_conv2_weights", "rdb1_conv2_biases",
+            std::array<uint32_t, 4>{ 32, 64, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[counter1++], & m_modelConvBiasWeights[counter2++]);
+        CreateWeightTensorsSimple(weights, "rdb1_conv3_weights", "rdb1_conv3_biases",
+            std::array<uint32_t, 4>{ 32, 96, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[counter1++], & m_modelConvBiasWeights[counter2++]);
+        CreateWeightTensorsSimple(weights, "rdb1_conv4_weights", "rdb1_conv4_biases",
+            std::array<uint32_t, 4>{ 32, 128, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[counter1++], & m_modelConvBiasWeights[counter2++]);
+        CreateWeightTensorsSimple(weights, "rdb2_conv1_weights", "rdb2_conv1_biases",
+            std::array<uint32_t, 4>{ 32, 32, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[counter1++], & m_modelConvBiasWeights[counter2++]);
+        CreateWeightTensorsSimple(weights, "rdb2_conv2_weights", "rdb2_conv2_biases",
+            std::array<uint32_t, 4>{ 32, 64, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[counter1++], & m_modelConvBiasWeights[counter2++]);
+        CreateWeightTensorsSimple(weights, "rdb2_conv3_weights", "rdb2_conv3_biases",
+            std::array<uint32_t, 4>{ 32, 96, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[counter1++], & m_modelConvBiasWeights[counter2++]);
+        CreateWeightTensorsSimple(weights, "rdb2_conv4_weights", "rdb2_conv4_biases",
+            std::array<uint32_t, 4>{ 32, 128, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[counter1++], & m_modelConvBiasWeights[counter2++]);
+        CreateWeightTensorsSimple(weights, "conv_final_weights", "conv_final_biases",
+            std::array<uint32_t, 4>{ 12, 32, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[counter1++], & m_modelConvBiasWeights[counter2++]);
+
+        weightUploadBatch.End(m_deviceResources->GetCommandQueue());
+
+        auto network = lumingNetwork.Compile();
+        modelInputBufferSize = lumingNetwork.m_modelInputBufferSize;
+        modelOutputBufferSize = lumingNetwork.m_modelOutputBufferSize;
+    }
+#else
     {
         using Dimensions = dml::TensorDesc::Dimensions;
 
@@ -326,38 +366,6 @@ void Sample::CreateDirectMLResources()
         // Compile the graph
         DML_EXECUTION_FLAGS executionFlags = DML_EXECUTION_FLAG_ALLOW_HALF_PRECISION_COMPUTATION;
         m_dmlGraph = graph.Compile(executionFlags, std::array<dml::Expression, 1>{ output });
-    }
-#else
-    {
-    DmlLumingNetwork lumingNetwork(m_dmlDevice.Get());
-
-    WeightMapType weights;
-    lumingNetwork.PopulateWeightMap(weights);
-
-        // Upload weights to the GPU
-        DirectX::ResourceUploadBatch weightUploadBatch(device);
-        weightUploadBatch.Begin();
-
-        CreateWeightTensors(weights, "conv1/weights", "conv1/BatchNorm/scale", "conv1/BatchNorm/shift",
-            std::array<uint32_t, 4>{ 32, 3, 5, 5 }, weightUploadBatch, & m_modelConvFilterWeights[0], & m_modelConvBiasWeights[0]);
-        CreateWeightTensors(weights, "conv2/weights", "conv2/BatchNorm/scale", "conv2/BatchNorm/shift",
-            std::array<uint32_t, 4>{ 64, 32, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[1], & m_modelConvBiasWeights[1]);
-        CreateWeightTensors(weights, "conv3/weights", "conv3/BatchNorm/scale", "conv3/BatchNorm/shift",
-            std::array<uint32_t, 4>{ 64, 64, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[2], & m_modelConvBiasWeights[2]);
-        CreateWeightTensors(weights, "conv_up1/conv/weights", "conv_up1/conv/BatchNorm/scale", "conv_up1/conv/BatchNorm/shift",
-            std::array<uint32_t, 4>{ 32, 64, 5, 5 }, weightUploadBatch, & m_modelConvFilterWeights[3], & m_modelConvBiasWeights[3]);
-        CreateWeightTensors(weights, "conv4/weights", "conv4/BatchNorm/scale", "conv4/BatchNorm/shift",
-            std::array<uint32_t, 4>{ 32, 32, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[4], & m_modelConvBiasWeights[4]);
-        CreateWeightTensors(weights, "conv5/weights", "conv5/BatchNorm/scale", "conv5/BatchNorm/shift",
-            std::array<uint32_t, 4>{ 32, 32, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[5], & m_modelConvBiasWeights[5]);
-        CreateWeightTensors(weights, "conv6/weights", nullptr, nullptr,
-            std::array<uint32_t, 4>{ 3, 32, 3, 3 }, weightUploadBatch, & m_modelConvFilterWeights[6], nullptr);
-
-        weightUploadBatch.End(m_deviceResources->GetCommandQueue());
-
-        auto network = lumingNetwork.Compile();
-        modelInputBufferSize = lumingNetwork.m_modelInputBufferSize;
-        modelOutputBufferSize = lumingNetwork.m_modelOutputBufferSize;
     }
 #endif
 
@@ -498,6 +506,22 @@ void Sample::InitializeDirectMLResources()
     };
     DX::ThrowIfFailed(m_dmlDevice->CreateBindingTable(&tableDesc, IID_PPV_ARGS(&initBindingTable)));
 
+#ifdef LUMING_NETWORK
+    DML_BUFFER_BINDING bufferBindings[] =
+    {
+        {}, // model input
+        { m_modelConvFilterWeights[0].Get(), 0, m_modelConvFilterWeights[0]->GetDesc().Width }, { m_modelConvBiasWeights[0].Get(), 0, m_modelConvBiasWeights[0]->GetDesc().Width },
+        { m_modelConvFilterWeights[1].Get(), 0, m_modelConvFilterWeights[1]->GetDesc().Width }, { m_modelConvBiasWeights[1].Get(), 0, m_modelConvBiasWeights[1]->GetDesc().Width },
+        { m_modelConvFilterWeights[2].Get(), 0, m_modelConvFilterWeights[2]->GetDesc().Width }, { m_modelConvBiasWeights[2].Get(), 0, m_modelConvBiasWeights[2]->GetDesc().Width },
+        { m_modelConvFilterWeights[3].Get(), 0, m_modelConvFilterWeights[3]->GetDesc().Width }, { m_modelConvBiasWeights[3].Get(), 0, m_modelConvBiasWeights[3]->GetDesc().Width },
+        { m_modelConvFilterWeights[4].Get(), 0, m_modelConvFilterWeights[4]->GetDesc().Width }, { m_modelConvBiasWeights[4].Get(), 0, m_modelConvBiasWeights[4]->GetDesc().Width },
+        { m_modelConvFilterWeights[5].Get(), 0, m_modelConvFilterWeights[5]->GetDesc().Width }, { m_modelConvBiasWeights[5].Get(), 0, m_modelConvBiasWeights[5]->GetDesc().Width },
+        { m_modelConvFilterWeights[6].Get(), 0, m_modelConvFilterWeights[6]->GetDesc().Width }, { m_modelConvBiasWeights[6].Get(), 0, m_modelConvBiasWeights[6]->GetDesc().Width },
+        { m_modelConvFilterWeights[7].Get(), 0, m_modelConvFilterWeights[7]->GetDesc().Width }, { m_modelConvBiasWeights[7].Get(), 0, m_modelConvBiasWeights[7]->GetDesc().Width },
+        { m_modelConvFilterWeights[8].Get(), 0, m_modelConvFilterWeights[8]->GetDesc().Width }, { m_modelConvBiasWeights[8].Get(), 0, m_modelConvBiasWeights[8]->GetDesc().Width },
+        { m_modelConvFilterWeights[9].Get(), 0, m_modelConvFilterWeights[9]->GetDesc().Width }, { m_modelConvBiasWeights[9].Get(), 0, m_modelConvBiasWeights[9]->GetDesc().Width },
+    };
+#else
     DML_BUFFER_BINDING bufferBindings[] =
     {
         {}, // model input
@@ -509,6 +533,7 @@ void Sample::InitializeDirectMLResources()
         { m_modelConvFilterWeights[5].Get(), 0, m_modelConvFilterWeights[5]->GetDesc().Width }, { m_modelConvBiasWeights[5].Get(), 0, m_modelConvBiasWeights[5]->GetDesc().Width },
         { m_modelConvFilterWeights[6].Get(), 0, m_modelConvFilterWeights[6]->GetDesc().Width }, // last layer has no bias
     };
+#endif
 
     // Bind inputs for initialization, which is only necessary if we're using OWNED_BY_DML
 
@@ -576,6 +601,24 @@ void Sample::InitializeDirectMLResources()
     // Bind model inputs and outputs
     bufferBindings[0] = DML_BUFFER_BINDING{ m_modelInput.Get() };
 #if DML_MANAGED_WEIGHTS
+
+#ifdef LUMING_NETWORK
+    // Bind only the model input
+    DML_BINDING_DESC inputBindings[] =
+    {
+        { DML_BINDING_TYPE_BUFFER, &bufferBindings[0] }, // model input
+        { DML_BINDING_TYPE_NONE, nullptr }, { DML_BINDING_TYPE_NONE, nullptr },
+        { DML_BINDING_TYPE_NONE, nullptr }, { DML_BINDING_TYPE_NONE, nullptr },
+        { DML_BINDING_TYPE_NONE, nullptr }, { DML_BINDING_TYPE_NONE, nullptr },
+        { DML_BINDING_TYPE_NONE, nullptr }, { DML_BINDING_TYPE_NONE, nullptr },
+        { DML_BINDING_TYPE_NONE, nullptr }, { DML_BINDING_TYPE_NONE, nullptr },
+        { DML_BINDING_TYPE_NONE, nullptr }, { DML_BINDING_TYPE_NONE, nullptr },
+        { DML_BINDING_TYPE_NONE, nullptr }, { DML_BINDING_TYPE_NONE, nullptr },
+        { DML_BINDING_TYPE_NONE, nullptr }, { DML_BINDING_TYPE_NONE, nullptr },
+        { DML_BINDING_TYPE_NONE, nullptr }, { DML_BINDING_TYPE_NONE, nullptr },
+        { DML_BINDING_TYPE_NONE, nullptr }, { DML_BINDING_TYPE_NONE, nullptr },
+    };
+#else
     // Bind only the model input
     DML_BINDING_DESC inputBindings[] =
     {
@@ -588,7 +631,26 @@ void Sample::InitializeDirectMLResources()
         { DML_BINDING_TYPE_NONE, nullptr }, { DML_BINDING_TYPE_NONE, nullptr },
         { DML_BINDING_TYPE_NONE, nullptr }, // last layer has no bias
     };
+#endif
     m_dmlBindingTable->BindInputs(ARRAYSIZE(inputBindings), inputBindings);
+#else
+
+#ifdef LUMING_NETWORK
+    // Bind everything
+    DML_BINDING_DESC inputBindings[] =
+    {
+        { DML_BINDING_TYPE_BUFFER, &bufferBindings[0] }, // model input
+        { DML_BINDING_TYPE_BUFFER, &bufferBindings[1] }, { DML_BINDING_TYPE_BUFFER, &bufferBindings[2] },
+        { DML_BINDING_TYPE_BUFFER, &bufferBindings[3] }, { DML_BINDING_TYPE_BUFFER, &bufferBindings[4] },
+        { DML_BINDING_TYPE_BUFFER, &bufferBindings[5] }, { DML_BINDING_TYPE_BUFFER, &bufferBindings[6] },
+        { DML_BINDING_TYPE_BUFFER, &bufferBindings[7] }, { DML_BINDING_TYPE_BUFFER, &bufferBindings[8] },
+        { DML_BINDING_TYPE_BUFFER, &bufferBindings[9] }, { DML_BINDING_TYPE_BUFFER, &bufferBindings[10] },
+        { DML_BINDING_TYPE_BUFFER, &bufferBindings[11] }, { DML_BINDING_TYPE_BUFFER, &bufferBindings[12] },
+        { DML_BINDING_TYPE_BUFFER, &bufferBindings[13] }, { DML_BINDING_TYPE_BUFFER, &bufferBindings[14] },
+        { DML_BINDING_TYPE_BUFFER, &bufferBindings[15] }, { DML_BINDING_TYPE_BUFFER, &bufferBindings[16] },
+        { DML_BINDING_TYPE_BUFFER, &bufferBindings[17] }, { DML_BINDING_TYPE_BUFFER, &bufferBindings[18] },
+        { DML_BINDING_TYPE_BUFFER, &bufferBindings[19] }, { DML_BINDING_TYPE_BUFFER, &bufferBindings[20] },
+    };
 #else
     // Bind everything
     DML_BINDING_DESC inputBindings[] =
@@ -602,6 +664,7 @@ void Sample::InitializeDirectMLResources()
         { DML_BINDING_TYPE_BUFFER, &bufferBindings[11] }, { DML_BINDING_TYPE_BUFFER, &bufferBindings[12] },
         { DML_BINDING_TYPE_BUFFER, &bufferBindings[13] }, // last layer has no bias
     };
+#endif
     m_dmlBindingTable->BindInputs(ARRAYSIZE(inputBindings), inputBindings);
 #endif
 

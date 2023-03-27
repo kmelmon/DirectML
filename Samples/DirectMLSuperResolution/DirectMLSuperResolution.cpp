@@ -1132,6 +1132,70 @@ void Sample::CreateWeightTensors(
     }
 }
 
+void Sample::CreateWeightTensorsSimple(
+    WeightMapType& weights,
+    const char* convLayerName,
+    const char* biasName,
+    dml::Span<const uint32_t> filterSizes,
+    DirectX::ResourceUploadBatch& uploadBatch,
+    _Out_writes_(1) ID3D12Resource** filterWeightResourceOut,
+    _Out_writes_(1) ID3D12Resource** biasWeightResourceOut)
+{
+    CreateWeightResource(filterSizes.data(), filterWeightResourceOut);
+    uint32_t biasSizes[] = { 1, filterSizes[0], 1, 1 };	// One bias per output channel
+    CreateWeightResource(biasSizes, biasWeightResourceOut);
+
+    // Convert weight values to FP16
+    WeightsType filterWeights = weights[convLayerName];
+    WeightsType biasWeights = weights[biasName];
+
+    std::vector<uint16_t> filterWeightsFP16;
+    std::vector<uint16_t> biasWeightsFP16;
+
+    const uint32_t N = filterSizes[0];
+    const uint32_t C = filterSizes[1];
+    const uint32_t H = filterSizes[2];
+    const uint32_t W = filterSizes[3];
+
+    for (uint32_t n = 0; n < N; n++)
+    {
+        switch (m_tensorLayout)
+        {
+        case TensorLayout::NHWC:
+            // We need to convert the weights from NCHW to NHWC.
+            for (uint32_t h = 0; h < H; h++)
+                for (uint32_t w = 0; w < W; w++)
+                    for (uint32_t c = 0; c < C; c++)
+                    {
+                        uint32_t idx = w + h * W + c * H * W + n * C * H * W;
+                        float weight = filterWeights[idx];
+                        filterWeightsFP16.push_back(Float16Compressor::compress(weight));
+                    }
+            break;
+
+        default:
+            // Weights are already in the right order
+            for (uint32_t i = 0; i < C * H * W; i++)
+            {
+                // Apply the scale weight now so we don't need a normalization layer
+                uint32_t idx = n * C * H * W + i;
+                float weight = filterWeights[idx];
+                filterWeightsFP16.push_back(Float16Compressor::compress(weight));
+            }
+        }
+
+        biasWeightsFP16.push_back(Float16Compressor::compress(biasWeights[n]));
+    }
+
+    // Upload to the GPU
+    D3D12_SUBRESOURCE_DATA weightsData = {};
+    weightsData.pData = filterWeightsFP16.data();
+    uploadBatch.Upload(*filterWeightResourceOut, 0, &weightsData, 1);
+
+    weightsData.pData = biasWeightsFP16.data();
+    uploadBatch.Upload(*biasWeightResourceOut, 0, &weightsData, 1);
+}
+
 void Sample::GetStrides(
     _In_reads_(4) const uint32_t* sizes,
     TensorLayout layout,

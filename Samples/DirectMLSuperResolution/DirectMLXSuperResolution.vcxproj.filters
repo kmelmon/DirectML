@@ -45,6 +45,9 @@
     <ClCompile Include="DmlNetwork.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LumingNetwork.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Kits\ATGTK\ATGColors.h">
@@ -93,6 +96,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DmlNetwork.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WeightMapType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LumingNetworkWeights.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
