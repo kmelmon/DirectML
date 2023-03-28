@@ -2,7 +2,7 @@
 #include "LumingNetwork.h"
 #include "LumingNetworkWeights.h"
 
-DmlLumingNetwork::DmlLumingNetwork(IDMLDevice* device, DML_TENSOR_DATA_TYPE dataType, uint32_t lrHeight, uint32_t lrWidth)
+DmlLumingNetwork::DmlLumingNetwork(IDMLDevice* device, DML_TENSOR_DATA_TYPE dataType, DML_TENSOR_FLAGS flags, uint32_t lrHeight, uint32_t lrWidth)
   : DmlNetworkBuilder(L"FNS Candy", device)
 {
     auto lr = Input(dml::TensorDesc(dataType, { 1, 3, lrHeight, lrWidth }));
@@ -51,8 +51,6 @@ void DmlLumingNetwork::PopulateWeightMap(WeightMapType& weights)
     ConvertToVectorAndAssign(weights, "rdb2_conv2_weights", rdb2_conv2_weights);
     ConvertToVectorAndAssign(weights, "rdb2_conv2_biases", rdb2_conv2_biases);
     ConvertToVectorAndAssign(weights, "rdb2_conv3_weights", rdb2_conv3_weights);
-    ConvertToVectorAndAssign(weights, "rdb2_conv3_weights", rdb2_conv3_weights);
-    ConvertToVectorAndAssign(weights, "rdb2_conv3_weights", rdb2_conv3_weights);
     ConvertToVectorAndAssign(weights, "rdb2_conv3_biases", rdb2_conv3_biases);
     ConvertToVectorAndAssign(weights, "rdb2_conv4_weights", rdb2_conv4_weights);
     ConvertToVectorAndAssign(weights, "rdb2_conv4_biases", rdb2_conv4_biases);
@@ -68,17 +66,18 @@ dml::Expression DmlLumingNetwork::Conv2d(
     uint32_t kernelSize,
     uint32_t stride,
     uint32_t padding,
+    DML_TENSOR_FLAGS flags,
     std::optional<DML_OPERATOR_TYPE> activationType)
 {
     auto nameScope = m_graph.CreateNameScope(dml::StringView(name));
 
     auto filter = ConstantInput(dml::TensorDesc(
-        input.GetOutputDesc().dataType,
+        input.GetOutputDesc().dataType, flags,
         { outChannels, inChannels, kernelSize, kernelSize })
     );
 
     auto bias = ConstantInput(dml::TensorDesc(
-        input.GetOutputDesc().dataType,
+        input.GetOutputDesc().dataType, flags,
         { 1, outChannels, 1, 1 })
     );
 
@@ -100,20 +99,20 @@ dml::Expression DmlLumingNetwork::Conv2d(
     return convBuilder.Build();
 }
 
-dml::Expression DmlLumingNetwork::ResidualDenseBlock_4C(std::string&& name, dml::Expression x, uint32_t gc)
+dml::Expression DmlLumingNetwork::ResidualDenseBlock_4C(std::string&& name, dml::Expression x, uint32_t gc, DML_TENSOR_FLAGS flags)
 {
     //auto nameScope = m_graph.CreateNameScope(name);
     const uint32_t nf = gc;
-    auto x1 = Conv2d("conv1", x, nf + 0 * gc, gc, 3, 1, 1, DML_OPERATOR_ACTIVATION_LEAKY_RELU);
+    auto x1 = Conv2d("conv1", x, nf + 0 * gc, gc, 3, 1, 1, flags, DML_OPERATOR_ACTIVATION_LEAKY_RELU);
 
     std::array<dml::Expression, 2> l1 = { x, x1 };
-    auto x2 = Conv2d("conv2", dml::Join(l1, 1), nf + 1 * gc, gc, 3, 1, 1, DML_OPERATOR_ACTIVATION_LEAKY_RELU);
+    auto x2 = Conv2d("conv2", dml::Join(l1, 1), nf + 1 * gc, gc, 3, 1, 1, flags, DML_OPERATOR_ACTIVATION_LEAKY_RELU);
 
     std::array<dml::Expression, 3> l2 = { x, x1, x2 };
-    auto x3 = Conv2d("conv3", dml::Join(l2, 1), nf + 2 * gc, gc, 3, 1, 1, DML_OPERATOR_ACTIVATION_LEAKY_RELU);
+    auto x3 = Conv2d("conv3", dml::Join(l2, 1), nf + 2 * gc, gc, 3, 1, 1, flags, DML_OPERATOR_ACTIVATION_LEAKY_RELU);
 
     std::array<dml::Expression, 4> l3 = { x, x1, x2, x3 };
-    auto x4 = Conv2d("conv4", dml::Join(l3, 1), nf + 3 * gc, nf, 3, 1, 1);
+    auto x4 = Conv2d("conv4", dml::Join(l3, 1), nf + 3 * gc, nf, 3, 1, 1, flags);
 
     return x4 * 0.2f + x; // TODO: should be fused into a single op
 }

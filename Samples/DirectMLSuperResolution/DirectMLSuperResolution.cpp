@@ -121,6 +121,9 @@ Sample::~Sample()
     {
         m_deviceResources->WaitForGpu();
     }
+#ifdef LUMING_NETWORK
+    if (m_lumingNetwork) delete m_lumingNetwork;
+#endif
 }
 
 // Initialize the Direct3D resources required to run.

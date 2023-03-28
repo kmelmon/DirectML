@@ -7,7 +7,6 @@
 #include "FindMedia.h"
 #include "ReadData.h"
 #include "Float16Compressor.h"
-#include "LumingNetwork.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -199,12 +198,18 @@ void Sample::CreateDirectMLResources()
     uint64_t modelInputBufferSize = 0;
     uint64_t modelOutputBufferSize = 0;
 
+    DML_TENSOR_DATA_TYPE dataType = DML_TENSOR_DATA_TYPE_FLOAT16;
+    DML_TENSOR_FLAGS flags = DML_TENSOR_FLAG_NONE;
+#if DML_MANAGED_WEIGHTS
+    flags |= DML_TENSOR_FLAG_OWNED_BY_DML;
+#endif
+
 #ifdef LUMING_NETWORK
     {
-        DmlLumingNetwork lumingNetwork(m_dmlDevice.Get());
+        m_lumingNetwork = new DmlLumingNetwork(m_dmlDevice.Get(), dataType, flags, m_origTextureHeight, m_origTextureWidth);
 
         WeightMapType weights;
-        lumingNetwork.PopulateWeightMap(weights);
+        m_lumingNetwork->PopulateWeightMap(weights);
 
         // Upload weights to the GPU
         DirectX::ResourceUploadBatch weightUploadBatch(device);
@@ -235,9 +240,10 @@ void Sample::CreateDirectMLResources()
 
         weightUploadBatch.End(m_deviceResources->GetCommandQueue());
 
-        auto network = lumingNetwork.Compile();
-        modelInputBufferSize = lumingNetwork.m_modelInputBufferSize;
-        modelOutputBufferSize = lumingNetwork.m_modelOutputBufferSize;
+        auto network = m_lumingNetwork->Compile();
+        m_dmlGraph = network.GetDmlGraphCompiledOperator();
+        modelInputBufferSize = m_lumingNetwork->m_modelInputBufferSize;
+        modelOutputBufferSize = m_lumingNetwork->m_modelOutputBufferSize;
     }
 #else
     {
@@ -273,12 +279,6 @@ void Sample::CreateDirectMLResources()
         weightUploadBatch.End(m_deviceResources->GetCommandQueue());
 
         // Construct a DML graph of operators
-
-        DML_TENSOR_DATA_TYPE dataType = DML_TENSOR_DATA_TYPE_FLOAT16;
-        DML_TENSOR_FLAGS flags = DML_TENSOR_FLAG_NONE;
-#if DML_MANAGED_WEIGHTS
-        flags |= DML_TENSOR_FLAG_OWNED_BY_DML;
-#endif
         
         // Select the correct tensor policy depending on our desired layout
         dml::TensorPolicy policy =

@@ -12,6 +12,7 @@
 #include "StepTimer.h"
 #include "LoadWeights.h"
 #include "MediaEnginePlayer.h"
+#include "LumingNetwork.h"
 
 // Force the default NCHW (batch/channels/height/width) tensor format, instead of determining
 // this based on the GPU vendor. Setting this may help run on older Nvidia hardware.
@@ -283,6 +284,10 @@ private:
     Microsoft::WRL::ComPtr<IDMLCompiledOperator>    m_dmlAddResidualOp;
     Microsoft::WRL::ComPtr<IDMLBindingTable>        m_dmlAddResidualBinding;
     Microsoft::WRL::ComPtr<IDMLOperatorInitializer> m_dmlOpInitializers[e_opCount];
+#endif
+
+#ifdef LUMING_NETWORK
+    DmlLumingNetwork* m_lumingNetwork = nullptr;
 #endif
 
     // DirectMLX operations

@@ -28,6 +28,8 @@ public:
         std::vector<TensorDesc>&& outputDescs
     );
 
+    IDMLCompiledOperator* GetDmlGraphCompiledOperator() { return m_dmlGraph.Get(); }
+
     // Allocates resources and initializes underlying DML graph. Should only be called once.
     // TODO: allow binding CPU data for initializers.
     //void Initialize(DxDevice& device);
