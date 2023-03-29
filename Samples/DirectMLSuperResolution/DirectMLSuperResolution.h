@@ -23,7 +23,7 @@
 #endif
 
 // Use video frames as input to the DirectML model, instead of a static texture.
-#define USE_VIDEO 1
+#define USE_VIDEO 0
 
 // Let DirectML manage the data in the weight tensors. This can be faster on some hardware.
 #define DML_MANAGED_WEIGHTS 1
@@ -80,6 +80,8 @@ public:
 
     Sample() noexcept(false);
     ~Sample();
+
+    void ParseCommandLine(LPWSTR lpCmdLine);
 
     // Initialization and management
     void Initialize(HWND window, int width, int height);

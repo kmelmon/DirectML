@@ -76,6 +76,7 @@
 #include <pix3.h>
 #include <variant>
 #include <optional>
+#include <shellapi.h>
 
 #include "CommonStates.h"
 #include "Effects.h"

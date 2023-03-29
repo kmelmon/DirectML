@@ -16,8 +16,10 @@
 #include "ReadData.h"
 #include "Float16Compressor.h"
 
-const wchar_t* c_videoPath = L"FH3_540p60.mp4";
-const wchar_t* c_imagePath = L"Assets\\FH3_1_540p.png";
+bool g_useVideo = false;
+wchar_t g_filePath[MAX_PATH] = L"Assets\\FH3_1_540p.png";
+
+//wchar_t c_videoPath[MAX_PATH] = L"FH3_540p60.mp4";
 
 const float c_pipSize = 0.45f;   // Relative size of the picture-in-picture window
 
@@ -124,6 +126,23 @@ Sample::~Sample()
 #ifdef LUMING_NETWORK
     if (m_lumingNetwork) delete m_lumingNetwork;
 #endif
+}
+
+void Sample::ParseCommandLine(LPWSTR lpCmdLine)
+{
+    int argc;
+    LPWSTR* argv = CommandLineToArgvW(lpCmdLine, &argc);
+    if (argc > 1)
+    {
+        if (wcscmp(argv[0], L"-file") == 0)
+        {
+            wcscpy_s<MAX_PATH>(g_filePath, argv[1]);
+            WCHAR* extension = g_filePath + wcslen(g_filePath) - 3;
+            g_useVideo = wcscmp(extension, L"mp4") == 0;
+        }
+    }
+    LocalFree(argv);
+
 }
 
 // Initialize the Direct3D resources required to run.
@@ -269,12 +288,13 @@ void Sample::Render()
         return;
     }
 
-#if USE_VIDEO
-    // Get the latest video frame
-    RECT r = { 0, 0, static_cast<LONG>(m_origTextureWidth), static_cast<LONG>(m_origTextureHeight) };
-    MFVideoNormalizedRect rect = { 0.0f, 0.0f, 1.0f, 1.0f };
-    m_player->TransferFrame(m_sharedVideoTexture, rect, r);
-#endif
+    if (g_useVideo)
+    {
+        // Get the latest video frame
+        RECT r = { 0, 0, static_cast<LONG>(m_origTextureWidth), static_cast<LONG>(m_origTextureHeight) };
+        MFVideoNormalizedRect rect = { 0.0f, 0.0f, 1.0f, 1.0f };
+        m_player->TransferFrame(m_sharedVideoTexture, rect, r);
+    }
 
     // Prepare the command list to render a new frame.
     m_deviceResources->Prepare();
@@ -910,11 +930,11 @@ void Sample::CreateTextureResources()
         m_indexBufferView.SizeInBytes = sizeof(s_indexData);
     }
 
-#if USE_VIDEO
-    // Create video player.
+    if (g_useVideo)
     {
-        wchar_t buff[MAX_PATH]; 
-        DX::FindMediaFile(buff, MAX_PATH, c_videoPath);
+        // Create video player.
+        wchar_t buff[MAX_PATH];
+        DX::FindMediaFile(buff, MAX_PATH, g_filePath);
 
         m_player = std::make_unique<MediaEnginePlayer>();
         m_player->Initialize(m_deviceResources->GetDXGIFactory(), device, DXGI_FORMAT_B8G8R8A8_UNORM);
@@ -963,9 +983,8 @@ void Sample::CreateTextureResources()
                 nullptr,
                 &m_sharedVideoTexture));
     }
-#else
-    // Create static texture.
-    {
+    else {
+        // Create static texture.
         auto commandList = m_deviceResources->GetCommandList();
         commandList->Reset(m_deviceResources->GetCommandAllocator(), nullptr);
 
@@ -978,7 +997,7 @@ void Sample::CreateTextureResources()
         txtDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 
         wchar_t buff[MAX_PATH];
-        DX::FindMediaFile(buff, MAX_PATH, c_imagePath);
+        DX::FindMediaFile(buff, MAX_PATH, g_filePath);
 
         UINT width, height;
         auto image = LoadBGRAImage(buff, width, height);
@@ -1028,7 +1047,6 @@ void Sample::CreateTextureResources()
         // Wait until assets have been uploaded to the GPU.
         m_deviceResources->WaitForGpu();
     }
-#endif
 }
 
 void Sample::CreateWeightTensors(

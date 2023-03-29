@@ -29,11 +29,13 @@ extern "C"
     __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 
+extern wchar_t* g_filePathPtr;
+extern bool g_useVideo;
+
 // Entry point
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
-    UNREFERENCED_PARAMETER(lpCmdLine);
 
     if (!XMVerifyCPUSupport())
         return 1;
@@ -43,6 +45,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         return 1;
 
     g_sample = std::make_unique<Sample>();
+    g_sample->ParseCommandLine(lpCmdLine);
 
     // Register class and create window
     {
