@@ -16,7 +16,11 @@
 
 // Force the default NCHW (batch/channels/height/width) tensor format, instead of determining
 // this based on the GPU vendor. Setting this may help run on older Nvidia hardware.
+#ifdef LUMING_NETWORK
+#define FORCE_NCHW 1
+#else
 #define FORCE_NCHW 0
+#endif
 
 // Use video frames as input to the DirectML model, instead of a static texture.
 #define USE_VIDEO 1

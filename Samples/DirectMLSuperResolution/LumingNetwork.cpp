@@ -19,7 +19,7 @@ DmlLumingNetwork::DmlLumingNetwork(IDMLDevice* device, DML_TENSOR_DATA_TYPE data
     out = ResidualDenseBlock_4C("rdb2", out, gc);
     out = out * 0.2f + x1; // TODO: should be fused into a single op
     out = Conv2d("conv_final", out, gc, 12, 3, 1, 1);
-    out = dml::DepthToSpace(out, 2);
+    out = dml::DepthToSpace(out, 2, DML_DEPTH_SPACE_ORDER_COLUMN_ROW_DEPTH);
 
     m_outputs = { out };
 

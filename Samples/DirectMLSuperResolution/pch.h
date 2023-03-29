@@ -15,6 +15,7 @@
 #include <SDKDDKVer.h>
 
 #define LUMING_NETWORK
+
 #define _CRT_RAND_S
 
 // Use the C++ standard templated min/max
